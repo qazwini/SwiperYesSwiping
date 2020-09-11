@@ -12,9 +12,9 @@ Add a floating left/right page action in Swift.
 
 **Manually**
 
-This only uses one file, so you can either
-1. Download this repo and drag and drop the `SwiperYesSwiping.swift` file into your project
-2. Or copy paste the code in `Sources/SwiperYesSwiping` into a swift file in your project.
+This repo only uses two files, so you can either
+1. Download this repo and drag and drop the `SwiperYesSwiping.swift` and `Helper.swift` files into your project
+2. Or copy paste the code in their code into a swift file in your project.
 
 **Swift Package Manager**
 
@@ -24,6 +24,4 @@ In Xcode, go to `File -> Swift Packages -> Add Package Dependency` and paste in 
 
 ### Usage
 
-If you are using Swift Package Manager, you need to add `Import SwiperYesSwiping` into the file you would like to use it in.
-
-
+If you are using Swift Package Manager, you need to add `Import SwiperYesSwiping` into the file you would like to use it in. 

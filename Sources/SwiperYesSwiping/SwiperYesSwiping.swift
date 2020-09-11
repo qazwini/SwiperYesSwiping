@@ -13,6 +13,7 @@ public class SwiperYesSwiping: NSObject {
     
     public var leftImage: UIImage?
     public var rightImage: UIImage?
+    public var topImage: UIImage?
     public var bothImageTintColor: UIColor = {
         if #available(iOS 13.0, *) {
             return UIColor { $0.userInterfaceStyle == .dark ? .white : .black }
@@ -28,6 +29,7 @@ public class SwiperYesSwiping: NSObject {
         }
     }
     public var sideMarginsWhenFullySwiped: CGFloat = 15
+    public var usesHaptics = true
     
     // MARK: Actions
     
@@ -36,7 +38,7 @@ public class SwiperYesSwiping: NSObject {
     
     // MARK: Functions
     
-    public func addSwiper() {
+    public func activate() {
         guard self.panGesture == nil else { print("Attempting to add swiper even though it has already been added."); return }
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(swiperSwiped(sender:)))
         mainWindow?.addGestureRecognizer(panGesture!)
@@ -50,7 +52,7 @@ public class SwiperYesSwiping: NSObject {
     // MARK: Additional
     
     public enum sideSwiped {
-        case left, right
+        case left, right, top
     }
     
     
@@ -71,53 +73,67 @@ public class SwiperYesSwiping: NSObject {
         let velocity = sender.velocity(in: mainWindow)
         let translation = sender.translation(in: mainWindow)
         
+        let languageDirection = UIApplication.shared.userInterfaceLayoutDirection
+        
         switch sender.state {
         case .began:
             dragIconImageView.transform = CGAffineTransform(scaleX: 0.8, y: 0.8)
             dragIconImageView.alpha = 0.4
-            dragIconImageView.tintColor = imageTintColor
-            dragIconImageView.layer.shadowOpacity = isDarkMode() ? 0 : 0.1
+            dragIconImageView.tintColor = self.bothImageTintColor
+            
             dragIconImageView.translatesAutoresizingMaskIntoConstraints = false
-            view.addSubview(dragIconImageView)
-            dragIconCenterConstraint = dragIconImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
-            NSLayoutConstraint.activate([dragIconImageView.widthAnchor.constraint(equalToConstant: abs(dragHiddenConstant)), dragIconImageView.heightAnchor.constraint(equalToConstant: abs(dragHiddenConstant)), dragIconCenterConstraint])
+            mainWindow.addSubview(dragIconImageView)
+            dragIconCenterConstraint = dragIconImageView.centerYAnchor.constraint(equalTo: mainWindow.centerYAnchor)
+            NSLayoutConstraint.activate([
+                dragIconImageView.widthAnchor.constraint(equalToConstant: abs(dragHiddenConstant)),
+                dragIconImageView.heightAnchor.constraint(equalToConstant: abs(dragHiddenConstant)),
+                dragIconCenterConstraint
+            ])
+            
             if velocity.x > 0 {
-                // Decrease day (if LTR)
+                // Left side
+                if let leftTint = self.leftImageTintColor {
+                    dragIconImageView.tintColor = leftTint
+                }
                 dragHiddenConstant = -34
-                dragIconLeadingTrailingConstraint = dragIconImageView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: dragHiddenConstant)
-                dragIconImageView.image = UIImage(named: "leftHome")?.withRenderingMode(.alwaysTemplate)
+                dragIconLeadingTrailingConstraint = dragIconImageView.leftAnchor.constraint(equalTo: mainWindow.leftAnchor, constant: dragHiddenConstant)
+                dragIconImageView.image = leftImage
             } else {
-                // Increase day (if LTR)
+                // Right side
+                if let rightTint = self.rightImageTintColor {
+                    dragIconImageView.tintColor = rightTint
+                }
                 dragHiddenConstant = 34
-                dragIconLeadingTrailingConstraint = dragIconImageView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: dragHiddenConstant)
-                dragIconImageView.image = UIImage(named: "rightHome")?.withRenderingMode(.alwaysTemplate)
+                dragIconLeadingTrailingConstraint = dragIconImageView.rightAnchor.constraint(equalTo: mainWindow.rightAnchor, constant: dragHiddenConstant)
+                dragIconImageView.image = rightImage
             }
             dragIconLeadingTrailingConstraint.isActive = true
-            view.layoutSubviews()
+            mainWindow.layoutSubviews()
+            
         case .changed:
-            let updateY = translation.y < 0 && translation.y > -80  // < 20
+            let updateY = translation.y < 0 && translation.y > -80
             
             if updateY {
                 if translation.y < -30 {
                     if !dragIsReset {
-                        hapticFeedback()
-                        dragIconImageView.image = UIImage(named: "calendarHome")?.withRenderingMode(.alwaysTemplate)
+                        if usesHaptics { Haptics.default() }
+                        dragIconImageView.image = topImage
                     }
                     dragIsReset = true
                 } else if dragIsReset {
-                    dragIconImageView.image = UIImage(named: dragHiddenConstant > 0 ? "rightHome" : "leftHome")?.withRenderingMode(.alwaysTemplate)
+                    dragIconImageView.image = dragHiddenConstant > 0 ? rightImage : leftImage
                     dragIsReset = false
                 }
             }
             
-            UIView.animate(withDuration: 0.2, delay: 0, options: [.allowUserInteraction, .curveEaseInOut]) {
+            UIView.animate(withDuration: 0.2, delay: 0, options: [.allowUserInteraction, .curveEaseInOut]) { [self] in
                 if updateY { self.dragIconCenterConstraint.constant = translation.y }
-                self.dragIconLeadingTrailingConstraint.constant = self.dragHiddenConstant < 0 ? min(translation.x + self.dragHiddenConstant, 20) : max(translation.x + self.dragHiddenConstant, -20)
+                self.dragIconLeadingTrailingConstraint.constant = self.dragHiddenConstant < 0 ? min(translation.x + self.dragHiddenConstant, self.sideMarginsWhenFullySwiped) : max(translation.x + self.dragHiddenConstant, -sideMarginsWhenFullySwiped)
                 mainWindow.layoutSubviews()
             }
             
             if dragIconImageView.alpha != 1 && abs(translation.x) >= 50 {
-                hapticFeedback(style: .light)
+                if usesHaptics { Haptics.light() }
                 UIView.animate(withDuration: 0.2, delay: 0, options: [.allowUserInteraction, .curveEaseInOut]) {
                     self.dragIconImageView.transform = .identity
                     self.dragIconImageView.alpha = 1
@@ -131,21 +147,14 @@ public class SwiperYesSwiping: NSObject {
         case .ended:
             if dragIconImageView.alpha == 1 {
                 if dragIsReset {
-                    panAdjustment = 0
+                    didCompleteSwipe?(.top)
                     dragIsReset = false
                 } else {
                     if velocity.x > 0 {
-                        isRightSide() ? (panAdjustment += 1) : (panAdjustment -= 1)
+                        didCompleteSwipe?(languageDirection == .leftToRight ? .left : .right)
                     } else {
-                        isRightSide() ? (panAdjustment -= 1) : (panAdjustment += 1)
+                        didCompleteSwipe?(languageDirection == .leftToRight ? .right : .left)
                     }
-                }
-                
-                DispatchQueue.main.async {
-                    self.setNafilahs(withAdjustment: self.panAdjustment)
-                    UIView.transition(with: self.collectionView, duration: 0.2, options: .transitionCrossDissolve, animations: {
-                        self.collectionView.reloadData()
-                    })
                 }
             }
             
