@@ -9,6 +9,8 @@ import UIKit
 
 public class SwiperYesSwiping {
     
+    public init() {}
+    
     // MARK: Customization
     
     public var view: UIView?
