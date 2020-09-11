@@ -97,7 +97,7 @@ public class SwiperYesSwiping {
                 if let leftTint = self.leftImageTintColor {
                     dragIconImageView.tintColor = leftTint
                 }
-                dragHiddenConstant = -34
+                dragHiddenConstant = -imageWidth
                 dragIconLeadingTrailingConstraint = dragIconImageView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: dragHiddenConstant)
                 dragIconImageView.image = leftImage
             } else {
@@ -105,7 +105,7 @@ public class SwiperYesSwiping {
                 if let rightTint = self.rightImageTintColor {
                     dragIconImageView.tintColor = rightTint
                 }
-                dragHiddenConstant = 34
+                dragHiddenConstant = imageWidth
                 dragIconLeadingTrailingConstraint = dragIconImageView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: dragHiddenConstant)
                 dragIconImageView.image = rightImage
             }
