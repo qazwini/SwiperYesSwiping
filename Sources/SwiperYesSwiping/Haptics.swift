@@ -1,5 +1,5 @@
 //
-//  Helpers.swift
+//  Haptics.swift
 //  SwiperYesSwiping
 //
 //  Created by MMQ on 9/11/20.

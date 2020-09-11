@@ -7,10 +7,11 @@
 
 import UIKit
 
-public class SwiperYesSwiping: NSObject {
+public class SwiperYesSwiping {
     
     // MARK: Customization
     
+    public var view: UIView?
     public var leftImage: UIImage?
     public var rightImage: UIImage?
     public var topImage: UIImage?
@@ -41,12 +42,12 @@ public class SwiperYesSwiping: NSObject {
     public func activate() {
         guard self.panGesture == nil else { print("Attempting to add swiper even though it has already been added."); return }
         panGesture = UIPanGestureRecognizer(target: self, action: #selector(swiperSwiped(sender:)))
-        mainWindow?.addGestureRecognizer(panGesture!)
+        view?.addGestureRecognizer(panGesture!)
     }
     
     public func deactivate() {
         guard let existingPanGesture = self.panGesture else { print("Attempting to deactivate swiper even though it has not been activated"); return }
-        mainWindow?.removeGestureRecognizer(existingPanGesture)
+        view?.removeGestureRecognizer(existingPanGesture)
     }
     
     // MARK: Additional
@@ -58,8 +59,6 @@ public class SwiperYesSwiping: NSObject {
     
     // MARK: - Private
     
-    private lazy var mainWindow: UIWindow? = UIApplication.shared.windows.first { $0.isKeyWindow }
-    
     private var panGesture: UIPanGestureRecognizer?
     private lazy var dragIconImageView = UIImageView()
     private lazy var dragIconLeadingTrailingConstraint = NSLayoutConstraint()
@@ -68,12 +67,13 @@ public class SwiperYesSwiping: NSObject {
     private var dragHiddenConstant: CGFloat = 34
     
     @objc func swiperSwiped(sender: UIPanGestureRecognizer) {
-        guard let mainWindow = self.mainWindow else { return }
+        guard let view = self.view else { return }
         
-        let velocity = sender.velocity(in: mainWindow)
-        let translation = sender.translation(in: mainWindow)
+        let velocity = sender.velocity(in: view)
+        let translation = sender.translation(in: view)
         
         let languageDirection = UIApplication.shared.userInterfaceLayoutDirection
+        let selectedTopImage = self.topImage != nil
         
         switch sender.state {
         case .began:
@@ -82,8 +82,8 @@ public class SwiperYesSwiping: NSObject {
             dragIconImageView.tintColor = self.bothImageTintColor
             
             dragIconImageView.translatesAutoresizingMaskIntoConstraints = false
-            mainWindow.addSubview(dragIconImageView)
-            dragIconCenterConstraint = dragIconImageView.centerYAnchor.constraint(equalTo: mainWindow.centerYAnchor)
+            view.addSubview(dragIconImageView)
+            dragIconCenterConstraint = dragIconImageView.centerYAnchor.constraint(equalTo: view.centerYAnchor)
             NSLayoutConstraint.activate([
                 dragIconImageView.widthAnchor.constraint(equalToConstant: abs(dragHiddenConstant)),
                 dragIconImageView.heightAnchor.constraint(equalToConstant: abs(dragHiddenConstant)),
@@ -96,7 +96,7 @@ public class SwiperYesSwiping: NSObject {
                     dragIconImageView.tintColor = leftTint
                 }
                 dragHiddenConstant = -34
-                dragIconLeadingTrailingConstraint = dragIconImageView.leftAnchor.constraint(equalTo: mainWindow.leftAnchor, constant: dragHiddenConstant)
+                dragIconLeadingTrailingConstraint = dragIconImageView.leftAnchor.constraint(equalTo: view.leftAnchor, constant: dragHiddenConstant)
                 dragIconImageView.image = leftImage
             } else {
                 // Right side
@@ -104,14 +104,14 @@ public class SwiperYesSwiping: NSObject {
                     dragIconImageView.tintColor = rightTint
                 }
                 dragHiddenConstant = 34
-                dragIconLeadingTrailingConstraint = dragIconImageView.rightAnchor.constraint(equalTo: mainWindow.rightAnchor, constant: dragHiddenConstant)
+                dragIconLeadingTrailingConstraint = dragIconImageView.rightAnchor.constraint(equalTo: view.rightAnchor, constant: dragHiddenConstant)
                 dragIconImageView.image = rightImage
             }
             dragIconLeadingTrailingConstraint.isActive = true
-            mainWindow.layoutSubviews()
+            view.layoutSubviews()
             
         case .changed:
-            let updateY = translation.y < 0 && translation.y > -80
+            let updateY = (translation.y < 0 && translation.y > -80) && selectedTopImage
             
             if updateY {
                 if translation.y < -30 {
@@ -129,7 +129,7 @@ public class SwiperYesSwiping: NSObject {
             UIView.animate(withDuration: 0.2, delay: 0, options: [.allowUserInteraction, .curveEaseInOut]) { [self] in
                 if updateY { self.dragIconCenterConstraint.constant = translation.y }
                 self.dragIconLeadingTrailingConstraint.constant = self.dragHiddenConstant < 0 ? min(translation.x + self.dragHiddenConstant, self.sideMarginsWhenFullySwiped) : max(translation.x + self.dragHiddenConstant, -sideMarginsWhenFullySwiped)
-                mainWindow.layoutSubviews()
+                view.layoutSubviews()
             }
             
             if dragIconImageView.alpha != 1 && abs(translation.x) >= 50 {
@@ -146,6 +146,7 @@ public class SwiperYesSwiping: NSObject {
             }
         case .ended:
             if dragIconImageView.alpha == 1 {
+                // Completed
                 if dragIsReset {
                     didCompleteSwipe?(.top)
                     dragIsReset = false
@@ -156,6 +157,18 @@ public class SwiperYesSwiping: NSObject {
                         didCompleteSwipe?(languageDirection == .leftToRight ? .right : .left)
                     }
                 }
+            } else {
+                // Cancelled
+                if dragIsReset {
+                    didCancelSwipe?(.top)
+                    dragIsReset = false
+                } else {
+                    if velocity.x > 0 {
+                        didCancelSwipe?(languageDirection == .leftToRight ? .left : .right)
+                    } else {
+                        didCancelSwipe?(languageDirection == .leftToRight ? .right : .left)
+                    }
+                }
             }
             
             UIView.animate(withDuration: 0.2, delay: 0, options: [.allowUserInteraction, .curveEaseInOut]) {
@@ -163,7 +176,7 @@ public class SwiperYesSwiping: NSObject {
                 self.dragIconImageView.alpha = 0
                 self.dragIconLeadingTrailingConstraint.constant = self.dragHiddenConstant
                 self.dragIconCenterConstraint.constant = 0
-                mainWindow.layoutSubviews()
+                view.layoutSubviews()
             } completion: { _ in
                 NSLayoutConstraint.deactivate([self.dragIconLeadingTrailingConstraint, self.dragIconCenterConstraint])
                 self.dragIconImageView.removeFromSuperview()
