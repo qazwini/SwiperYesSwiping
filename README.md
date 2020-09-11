@@ -9,16 +9,15 @@ Add a floating left/right page action in Swift.
 
 ## Requirements
 
-- iOS 11.0+
-- Xcode 8
+- iOS 10.0+
 
 
 ## Integration
 
 ### Manually
 
-This repo only uses two files, so you can either
-1. Download this repo and drag and drop the `SwiperYesSwiping.swift` and `Haptics.swift` files into your project
+This repo only uses three files, so you can either
+1. Download this repo and drag and drop the `SwiperYesSwiping.swift`, `HPGestureRecognizer.swift`, and `Haptics.swift` files into your project
 2. Or copy paste their code into a swift file in your project.
 
 ### Swift Package Manager
@@ -33,10 +32,37 @@ If you are using Swift Package Manager, you need to add `Import SwiperYesSwiping
 
 - Initialize `let swiper = SwiperYesSwiping()` somewhere in your class.
 - Set the `view` property to the whichever view controller's view or any other view you'd like to add this on. If you don't, it will automatically choose the top view controller at the time that `activate()` is run.
-- Set the `leftImage` and `rightImage` to any image you want. You can use SF Symbols as well. If you are adding a top action, also add a `topImage`.
+- Set the `leftImage` and `rightImage` to any image you want. You can use SF Symbols as well. If you are adding a top action, also add a `topImage`. In the demo, all the icons are SF Symbols. The left icon is `chevron.left.circle.fill`, right is `chevron.right.circle.fill`, and top is `calendar.circle.fill`.
 - Set the `didCompleteSwipe()` function to whatever function you want to run when the user fully completes the action. The `sideSwiped` will be `top` if the user highered it (if you did not set an image for `topImage`, this will not run).
 - Set the `didCancelSwipe()` function to whatever function you want to run when the user swipes but then cancels their swipe.
 - Make sure to run the `activate()` function to set up the gesture recognizer. If you wish to remove the recognizer from the view, use `deactivate()`.
+
+### Example Usage
+
+```
+class ViewController: UIViewController {
+    let swiper = SwiperYesSwiping()
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        swiper.view = view
+        swiper.leftImage = UIImage(systemName: "chevron.left.circle.fill")
+        swiper.rightImage = UIImage(systemName: "chevron.right.circle.fill")
+        swiper.topImage = UIImage(systemName: "calendar.circle.fill")
+        swiper.bothImageTintColor = .white
+        swiper.didCompleteSwipe = { side in
+            switch side {
+            case .left: print("User swiped left")
+            case .right: print("User swiped right")
+            case .top: print("User raised arrow")
+            }
+        }
+        swiper.sideMarginsWhenFullySwiped = 20
+        swiper.activate()
+    }
+}
+```
 
 ### Additional Customization
 

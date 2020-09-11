@@ -41,7 +41,7 @@ public class SwiperYesSwiping {
     
     public func activate() {
         guard self.panGesture == nil else { print("Attempting to add swiper even though it has already been added."); return }
-        panGesture = UIPanGestureRecognizer(target: self, action: #selector(swiperSwiped(sender:)))
+        panGesture = HPGestureRecognizer(target: self, action: #selector(swiperSwiped(sender:)))
         view?.addGestureRecognizer(panGesture!)
     }
     
@@ -59,14 +59,14 @@ public class SwiperYesSwiping {
     
     // MARK: - Private
     
-    private var panGesture: UIPanGestureRecognizer?
+    private var panGesture: HPGestureRecognizer?
     private lazy var dragIconImageView = UIImageView()
     private lazy var dragIconLeadingTrailingConstraint = NSLayoutConstraint()
     private lazy var dragIconCenterConstraint = NSLayoutConstraint()
     private var dragIsReset = false
     private var dragHiddenConstant: CGFloat = 34
     
-    @objc func swiperSwiped(sender: UIPanGestureRecognizer) {
+    @objc func swiperSwiped(sender: HPGestureRecognizer) {
         guard let view = self.view else { return }
         
         let velocity = sender.velocity(in: view)
