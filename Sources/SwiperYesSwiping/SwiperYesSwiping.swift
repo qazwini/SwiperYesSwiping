@@ -9,14 +9,23 @@ import UIKit
 
 public class SwiperYesSwiping {
     
-    public init() {}
+    // MARK: - Customization
     
-    // MARK: Customization
-    
+    /// The view you want to add the buttons to.
     public var view: UIView?
+    
+    /// The left image icon.
     public var leftImage: UIImage?
+    
+    /// The right image icon.
     public var rightImage: UIImage?
+    
+    /// The icon shown when the user swipes either icon to the top.
+    /// If this is not set, there will be no top action nor ability to vertically move the icons.
     public var topImage: UIImage?
+    
+    /// Set this to your desired color if you want both icons (right and left) to use the same tint color.
+    /// If you want to use different colors for each, set `leftImageTintColor` and `rightImageTintColor`
     public var bothImageTintColor: UIColor = {
         if #available(iOS 13.0, *) {
             return UIColor { $0.userInterfaceStyle == .dark ? .white : .black }
@@ -24,39 +33,67 @@ public class SwiperYesSwiping {
             return .black
         }
     }()
+    
+    /// Sets the left image tint to desired color.
+    /// If you wish to use the same color for the right and left images, set `bothImageTintColor` instead.
     public var leftImageTintColor: UIColor?
+    
+    /// Sets the right image tint to desired color.
+    /// If you wish to use the same color for the right and left images, set `bothImageTintColor` instead.
     public var rightImageTintColor: UIColor?
+    
+    /// Sets the icon image width. Default is 34.
     public var imageWidth: CGFloat = 34 {
         didSet {
             dragHiddenConstant = self.imageWidth
         }
     }
+    
+    /// Set this to the edge insets you want for the image when it popped out. The larger the number, the further from the edges.
     public var sideMarginsWhenFullySwiped: CGFloat = 15
+    
+    /// Disable to not use haptic feedback.
     public var usesHaptics = true
     
-    // MARK: Actions
     
+    // MARK: - Actions
+    
+    /// Function called when the user fully completes a swipe.
+    ///
+    /// - parameter sideSwiped: The swiped side.
     public var didCompleteSwipe: ((sideSwiped) -> Void)?
+    
+    /// Function called when the swipes but then cancels the swipe.
+    ///
+    /// - parameter sideSwiped: The swiped side before being cancelled.
     public var didCancelSwipe: ((sideSwiped) -> Void)?
     
-    // MARK: Functions
     
+    // MARK: - Functions
+    
+    public init() {}
+    
+    /// Activates the swipers.
     public func activate() {
         guard self.panGesture == nil else { print("Attempting to add swiper even though it has already been added."); return }
         panGesture = HPGestureRecognizer(target: self, action: #selector(swiperSwiped(sender:)))
         view?.addGestureRecognizer(panGesture!)
     }
     
+    /// Deactivates the swipers.
     public func deactivate() {
         guard let existingPanGesture = self.panGesture else { print("Attempting to deactivate swiper even though it has not been activated"); return }
         view?.removeGestureRecognizer(existingPanGesture)
     }
     
-    // MARK: Additional
+    
+    // MARK: - Additional
     
     public enum sideSwiped {
         case left, right, top
     }
+    
+    
     
     
     // MARK: - Private
@@ -68,7 +105,7 @@ public class SwiperYesSwiping {
     private var dragIsReset = false
     private var dragHiddenConstant: CGFloat = 34
     
-    @objc func swiperSwiped(sender: HPGestureRecognizer) {
+    @objc private func swiperSwiped(sender: HPGestureRecognizer) {
         guard let view = self.view else { return }
         
         let velocity = sender.velocity(in: view)

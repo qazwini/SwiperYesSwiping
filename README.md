@@ -23,7 +23,7 @@ This repo only uses three files, so you can either
 ### Swift Package Manager
 
 You can also integrate it into your project using Swift Package Manager.
-In Xcode, go to `File -> Swift Packages -> Add Package Dependency` and paste in the repo's url: `https://github.com/qazwini/SwiperYesSwiping`
+In Xcode, go to `File -> Swift Packages -> Add Package Dependency` and paste in the repo's url: `https://github.com/qazwini/SwiperYesSwiping`.
 
 
 ## Usage
