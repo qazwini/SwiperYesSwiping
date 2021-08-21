@@ -39,7 +39,7 @@ If you are using Swift Package Manager, you need to add `Import SwiperYesSwiping
 
 ### Example Usage
 
-```
+```swift
 class ViewController: UIViewController {
     let swiper = SwiperYesSwiping()
     
